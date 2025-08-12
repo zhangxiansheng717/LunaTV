@@ -33,9 +33,6 @@ jobs:
           echo "Tag: $TAG_NAME"
 
       - name: Get tag message
-        id: tag_message
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME=${{ steps.version.outputs.tag }}
           RELEASE_BODY=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
@@ -69,6 +66,7 @@ jobs:
           else
             cp /tmp/new_entry.txt CHANGELOG
           fi
+          rm CHANGELOG.bak
           echo "✅ Updated CHANGELOG with new entry for version $VERSION"
 
           echo "Updating VERSION.txt..."
@@ -82,15 +80,27 @@ jobs:
             sed -i "s/const CURRENT_VERSION = '[^']*';/const CURRENT_VERSION = '$VERSION';/" src/lib/version.ts
             echo "✅ Updated version.ts to $VERSION"
 
-      - name: Commit generated files
+      - name: Commit to Codeberg
         run: |
           git config --local user.email "${{ secrets.PUSH_EMAIL }}"
           git config --local user.name "${{ secrets.PUSH_NAME }}"
           git add CHANGELOG VERSION.txt src/lib/changelog.ts src/lib/version.ts
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: Bump to ${{ steps.version.outputs.version }}"
-            git push https://${{ secrets.PUSH_TOKEN }}@${{ secrets.REPO_URL }}.git HEAD:main
-            echo "Committed and pushed generated files"
-          fi
+          git commit -m "chore: Bump to ${{ steps.version.outputs.version }}"
+          git push https://${{ secrets.PUSH_TOKEN }}@${{ secrets.REPO_URL }}.git HEAD:main
+          rm -rf .git
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          path: 'github'
+          ref: 'main'
+
+      - name: Commit to Github
+        run: |
+          cd github
+          cp ../{CHANGELOG,VERSION.txt} .
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add CHANGELOG VERSION.txt
+          git commit -m "chore: Bump to ${{ steps.version.outputs.version }}"
+          git push -u https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
