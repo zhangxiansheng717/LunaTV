@@ -38,7 +38,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME=${{ steps.version.outputs.tag }}
-          RELEASE_BODY=$(gh release view "$TAG_NAME" --json body -q .body || echo "")
+          RELEASE_BODY=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG_NAME" | jq -r '.body // ""')
           printf '%s\n' "$RELEASE_BODY" > /tmp/tag_message.txt
           echo "Tag message saved to /tmp/tag_message.txt"
           echo "Tag message content:"
@@ -83,8 +84,8 @@ jobs:
 
       - name: Commit generated files
         run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "${{ secrets.PUSH_EMAIL }}"
+          git config --local user.name "${{ secrets.PUSH_NAME }}"
           git add CHANGELOG VERSION.txt src/lib/changelog.ts src/lib/version.ts
           if git diff --staged --quiet; then
             echo "No changes to commit"
