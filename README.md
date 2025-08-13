@@ -37,6 +37,10 @@
   <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
 </details>
 
+### 请不要在 B站、小红书、微信公众号或其他中国大陆社交平台发布视频或文章宣传本项目
+
+本项目为空项目，请勿 fork，喜欢可点 star
+
 ## 🗺 目录
 
 - [技术栈](#技术栈)
