@@ -214,7 +214,7 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 
 目前该项目可以配合 [OrionTV](https://github.com/zimplexing/OrionTV) 在 Android TV 上使用，可以直接作为 OrionTV 后端
 
-暂时收藏夹与播放记录和网页端隔离，支持同步用户数据
+已实现播放记录和网页端同步
 
 ## 安全与隐私提醒
 
