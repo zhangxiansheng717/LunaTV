@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Checkout source code
         run: |
-          git clone https://${{ secrets.REPO_URL }}.git .
+          git clone https://${{ secrets.PUSH_TOKEN }}@${{ secrets.REPO_URL }}.git .
 
       - name: Extract version from tag
         id: version
