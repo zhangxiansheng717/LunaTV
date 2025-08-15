@@ -93,7 +93,7 @@ services:
     container_name: moontv-kvrocks
     restart: unless-stopped
     volumes:
-      - ./db:/kvrocks_data
+      - ./db:/var/lib/kvrocks
     networks:
       - moontv-network
 networks:
