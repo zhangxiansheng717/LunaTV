@@ -90,10 +90,11 @@ services:
       - moontv-kvrocks
   moontv-kvrocks:
     image: apache/kvrocks
+    privileged: true
     container_name: moontv-kvrocks
     restart: unless-stopped
     volumes:
-      - ./db:/var/lib/kvrocks
+      - ./db:/var/lib/kvrocks/db
     networks:
       - moontv-network
 networks:
