@@ -87,7 +87,7 @@ services:
     networks:
       - moontv-network
     depends_on:
-      - moontv-redis
+      - moontv-kvrocks
   moontv-kvrocks:
     image: apache/kvrocks
     container_name: moontv-kvrocks
@@ -95,7 +95,7 @@ services:
     volumes:
       - ./db:/kvrocks_data
     networks:
-      - moontv-networt
+      - moontv-network
 networks:
   moontv-network:
     driver: bridge
