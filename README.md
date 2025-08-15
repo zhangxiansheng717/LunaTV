@@ -90,16 +90,17 @@ services:
       - moontv-kvrocks
   moontv-kvrocks:
     image: apache/kvrocks
-    privileged: true
     container_name: moontv-kvrocks
     restart: unless-stopped
     volumes:
-      - ./db:/var/lib/kvrocks/db
+      - kvrocks-data:/var/lib/kvrocks
     networks:
       - moontv-network
 networks:
   moontv-network:
     driver: bridge
+volumes:
+  kvrocks-data:
 ```
 
 ### Redis 存储
