@@ -83,7 +83,7 @@ services:
       - USERNAME=admin
       - PASSWORD=admin_password
       - NEXT_PUBLIC_STORAGE_TYPE=kvrocks
-      - KVROCKS_URL=redis://kvrocks:6666
+      - KVROCKS_URL=redis://moontv-kvrocks:6666
     networks:
       - moontv-network
     depends_on:
