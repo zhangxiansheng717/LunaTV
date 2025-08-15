@@ -23,7 +23,7 @@
 - 🔍 **多源聚合搜索**：内置数十个免费资源站点，一次搜索立刻返回全源结果。
 - 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
 - ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
-- ❤️ **收藏 + 继续观看**：支持 Redis/Upstash 存储，多端同步进度。
+- ❤️ **收藏 + 继续观看**：支持 Kvrocks/Redis/Upstash 存储，多端同步进度。
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
@@ -68,6 +68,38 @@
 ## 部署
 
 本项目**仅支持 Docker 或其他基于 Docker 的平台** 部署。
+
+### Kvrocks 存储（推荐）
+
+```yml
+services:
+  moontv-core:
+    image: ghcr.io/moontechlab/lunatv:latest
+    container_name: moontv-core
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - USERNAME=admin
+      - PASSWORD=admin_password
+      - NEXT_PUBLIC_STORAGE_TYPE=kvrocks
+      - KVROCKS_URL=redis://kvrocks:6666
+    networks:
+      - moontv-network
+    depends_on:
+      - moontv-redis
+  moontv-kvrocks:
+    image: apache/kvrocks
+    container_name: moontv-kvrocks
+    restart: unless-stopped
+    volumes:
+      - ./db:/kvrocks_data
+    networks:
+      - moontv-networt
+networks:
+  moontv-network:
+    driver: bridge
+```
 
 ### Redis 存储
 
@@ -184,7 +216,8 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 | PASSWORD                            | 非 localstorage 部署时为管理员密码           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
 | NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | MoonTV                                                                                                                     |
 | ANNOUNCEMENT                        | 站点公告                                     | 任意字符串                       | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | redis、upstash | 无默认，必填字段                                                                                                               |
+| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | redis、kvrocks、upstash | 无默认，必填字段                                                                                                               |
+| KVROCKS_URL                           | kvrocks 连接 url                               | 连接 url                         | 空                                                                                                                         |
 | REDIS_URL                           | redis 连接 url                               | 连接 url                         | 空                                                                                                                         |
 | UPSTASH_URL                         | upstash redis 连接 url                       | 连接 url                         | 空                                                                                                                         |
 | UPSTASH_TOKEN                       | upstash redis 连接 token                     | 连接 token                       | 空                                                                                                                         |
