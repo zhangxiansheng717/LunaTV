@@ -106,7 +106,7 @@ volumes:
   kvrocks-data:
 ```
 
-### Redis 存储
+### Redis 存储（有一定的丢数据风险）
 
 ```yml
 services:
