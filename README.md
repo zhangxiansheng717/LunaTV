@@ -30,6 +30,8 @@
 
 ### 注意：本项目为闭源项目，本仓库仅用于分发 docker 镜像和收集 issue，介意请绕道
 
+### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
+
 <details>
   <summary>点击查看项目截图</summary>
   <img src="public/screenshot1.png" alt="项目截图" style="max-width:600px">
