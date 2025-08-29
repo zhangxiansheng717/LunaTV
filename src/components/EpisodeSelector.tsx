@@ -374,12 +374,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             }
           `.trim()}
         >
-          <div className="flex items-center justify-center gap-1">
-            <span>换源</span>
-            {activeTab === 'sources' && (
-              <span className="text-xs opacity-75">⚡按速度排序</span>
-            )}
-          </div>
+          换源
         </div>
       </div>
 
