@@ -2424,9 +2424,8 @@ const VideoSourceConfig = ({
   // 全选/取消全选
   const handleSelectAll = useCallback((checked: boolean) => {
     // 保存当前滚动位置
-    const tableContainer = document.querySelector('[data-table="source-list"]');
-    if (tableContainer) {
-      tableScrollRef.current = tableContainer.scrollTop;
+    if (tableContainerRef.current) {
+      tableScrollRef.current = tableContainerRef.current.scrollTop;
     }
 
     if (checked) {
@@ -2439,27 +2438,40 @@ const VideoSourceConfig = ({
 
   // 保存表格滚动位置的ref
   const tableScrollRef = useRef<number>(0);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // 在selectedSources变化后恢复滚动位置
   useEffect(() => {
-    if (tableScrollRef.current > 0) {
-      const tableContainer = document.querySelector('[data-table="source-list"]');
-      if (tableContainer) {
-        // 使用requestAnimationFrame确保DOM已完全更新
-        requestAnimationFrame(() => {
-          tableContainer.scrollTop = tableScrollRef.current;
+    if (tableScrollRef.current > 0 && tableContainerRef.current) {
+      // 保存滚动位置到临时变量
+      const scrollTop = tableScrollRef.current;
+
+      // 使用多重保险确保滚动恢复
+      // 方法1: 立即尝试
+      tableContainerRef.current.scrollTop = scrollTop;
+
+      // 方法2: 下一个事件循环
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTop = scrollTop;
+        }
+      }, 0);
+
+      // 方法3: 稍长延迟确保DOM完全更新
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTop = scrollTop;
           tableScrollRef.current = 0; // 重置保存的位置
-        });
-      }
+        }
+      }, 10);
     }
   }, [selectedSources]);
 
   // 单个选择
   const handleSelectSource = useCallback((key: string, checked: boolean) => {
     // 保存当前滚动位置
-    const tableContainer = document.querySelector('[data-table="source-list"]');
-    if (tableContainer) {
-      tableScrollRef.current = tableContainer.scrollTop;
+    if (tableContainerRef.current) {
+      tableScrollRef.current = tableContainerRef.current.scrollTop;
     }
 
     setSelectedSources(prev => {
@@ -2653,7 +2665,7 @@ const VideoSourceConfig = ({
 
 
       {/* 视频源表格 */}
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative' data-table="source-list">
+      <div ref={tableContainerRef} className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative' data-table="source-list">
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
           <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
             <tr>
