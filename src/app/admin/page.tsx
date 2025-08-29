@@ -2423,6 +2423,12 @@ const VideoSourceConfig = ({
 
   // 全选/取消全选
   const handleSelectAll = useCallback((checked: boolean) => {
+    // 保存当前滚动位置
+    const tableContainer = document.querySelector('[data-table="source-list"]');
+    if (tableContainer) {
+      tableScrollRef.current = tableContainer.scrollTop;
+    }
+
     if (checked) {
       const allKeys = sources.map(s => s.key);
       setSelectedSources(new Set(allKeys));
@@ -2431,8 +2437,31 @@ const VideoSourceConfig = ({
     }
   }, [sources]);
 
+  // 保存表格滚动位置的ref
+  const tableScrollRef = useRef<number>(0);
+
+  // 在selectedSources变化后恢复滚动位置
+  useEffect(() => {
+    if (tableScrollRef.current > 0) {
+      const tableContainer = document.querySelector('[data-table="source-list"]');
+      if (tableContainer) {
+        // 使用requestAnimationFrame确保DOM已完全更新
+        requestAnimationFrame(() => {
+          tableContainer.scrollTop = tableScrollRef.current;
+          tableScrollRef.current = 0; // 重置保存的位置
+        });
+      }
+    }
+  }, [selectedSources]);
+
   // 单个选择
   const handleSelectSource = useCallback((key: string, checked: boolean) => {
+    // 保存当前滚动位置
+    const tableContainer = document.querySelector('[data-table="source-list"]');
+    if (tableContainer) {
+      tableScrollRef.current = tableContainer.scrollTop;
+    }
+
     setSelectedSources(prev => {
       const newSelected = new Set(prev);
       if (checked) {
