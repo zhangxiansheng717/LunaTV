@@ -1,13 +1,7 @@
-name: Build & Push Docker image
+name: Build & Push My Docker image
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Docker 标签'
-        required: false
-        default: 'latest'
-        type: string
   push:
     branches: [ main, master ]
   pull_request:
@@ -21,6 +15,11 @@ permissions:
   contents: write
   packages: write
   actions: write
+
+# 【重要修改】使用 'env' 来定义您自己的镜像名称
+# 这样下面所有地方就不用一个个手动改了！
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}:latest
 
 jobs:
   build:
@@ -51,19 +50,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercase repository owner
-        id: lowercase
-        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-
-        with:
-          images: ghcr.io/moontechlab/lunatv
-          tags: |
-            type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
-
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v5
@@ -71,9 +57,10 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          tags: ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/moontechlab/lunatv,name-canonical=true,push=true
+          # 【修改点 1】 使用 env.IMAGE_NAME
+          tags: ${{ env.IMAGE_NAME }}
+          # 【修改点 2】 使用 env.IMAGE_NAME，并去掉 :latest
+          outputs: type=image,name=${{ env.IMAGE_NAME | replace:':latest','' }},name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -111,15 +98,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercase repository owner
-        id: lowercase
-        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create -t ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }} \
-            $(printf 'ghcr.io/moontechlab/lunatv@sha256:%s ' *)
+          # 【修改点 3】 使用 env.IMAGE_NAME
+          docker buildx imagetools create -t ${{ env.IMAGE_NAME }} \
+            # 【修改点 4】 使用 env.IMAGE_NAME，并去掉 :latest
+            $(printf '${{ env.IMAGE_NAME | replace:":latest","" }}@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
