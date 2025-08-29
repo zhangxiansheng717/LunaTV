@@ -16,10 +16,9 @@ permissions:
   packages: write
   actions: write
 
-# 【重要修改】使用 'env' 来定义您自己的镜像名称
-# 这样下面所有地方就不用一个个手动改了！
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}:latest
+  # 这次我们把仓库名强制转为小写，这是 Docker 镜像的最佳实践
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
 
 jobs:
   build:
@@ -57,10 +56,9 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          # 【修改点 1】 使用 env.IMAGE_NAME
           tags: ${{ env.IMAGE_NAME }}
-          # 【修改点 2】 使用 env.IMAGE_NAME，并去掉 :latest
-          outputs: type=image,name=${{ env.IMAGE_NAME | replace:':latest','' }},name-canonical=true,push=true
+          # 【已修正】使用了正确的 replace() 函数语法
+          outputs: type=image,name=${{ replace(env.IMAGE_NAME, ':latest', '') }},name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -101,10 +99,9 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          # 【修改点 3】 使用 env.IMAGE_NAME
+          # 【已修正】使用了正确的 replace() 函数语法
           docker buildx imagetools create -t ${{ env.IMAGE_NAME }} \
-            # 【修改点 4】 使用 env.IMAGE_NAME，并去掉 :latest
-            $(printf '${{ env.IMAGE_NAME | replace:":latest","" }}@sha256:%s ' *)
+            $(printf '${{ replace(env.IMAGE_NAME, ":latest", "") }}@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
@@ -119,3 +116,4 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: 0
           keep_minimum_runs: 2
+
