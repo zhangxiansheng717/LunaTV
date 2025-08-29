@@ -1,7 +1,13 @@
-name: Build & Push My Docker image
+name: Build & Push Docker image
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker 标签'
+        required: false
+        default: 'latest'
+        type: string
   push:
     branches: [ main, master ]
   pull_request:
@@ -15,10 +21,6 @@ permissions:
   contents: write
   packages: write
   actions: write
-
-env:
-  # 这次我们把仓库名强制转为小写，这是 Docker 镜像的最佳实践
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
 
 jobs:
   build:
@@ -34,7 +36,7 @@ jobs:
     steps:
       - name: Prepare platform name
         run: |
-          echo "PLATFORM_NAME=${{ matrix.platform }}" | sed 's|/|-|g' >> $GITHUB_ENV
+          echo "PLATFORM_NAME=$(echo "${{ matrix.platform }}" | sed 's|/|-|g')" >> $GITHUB_ENV
 
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -49,6 +51,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase names
+        id: lowercase
+        run: |
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "repo=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}
+          tags: |
+            type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
+
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v5
@@ -56,9 +72,9 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.IMAGE_NAME }}
-          # 【已修正】使用了正确的 replace() 函数语法
-          outputs: type=image,name=${{ replace(env.IMAGE_NAME, ':latest', '') }},name-canonical=true,push=true
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}:${{ github.event.inputs.tag || 'latest' }}
+          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }},name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -96,12 +112,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase names
+        id: lowercase
+        run: |
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "repo=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          # 【已修正】使用了正确的 replace() 函数语法
-          docker buildx imagetools create -t ${{ env.IMAGE_NAME }} \
-            $(printf '${{ replace(env.IMAGE_NAME, ":latest", "") }}@sha256:%s ' *)
+          docker buildx imagetools create -t ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}:${{ github.event.inputs.tag || 'latest' }} \
+            $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
@@ -116,4 +137,3 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: 0
           keep_minimum_runs: 2
-
