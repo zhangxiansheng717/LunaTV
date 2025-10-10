@@ -526,42 +526,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     const bIsCurrent =
                       b.source?.toString() === currentSource?.toString() &&
                       b.id?.toString() === currentId?.toString();
-                    
-                    // 当前播放的源始终排在最前面
                     if (aIsCurrent && !bIsCurrent) return -1;
                     if (!aIsCurrent && bIsCurrent) return 1;
-                    
-                    // 如果都不是当前源，则按速度排序
-                    if (!aIsCurrent && !bIsCurrent) {
-                      const aSourceKey = `${a.source}-${a.id}`;
-                      const bSourceKey = `${b.source}-${b.id}`;
-                      const aVideoInfo = videoInfoMap.get(aSourceKey);
-                      const bVideoInfo = videoInfoMap.get(bSourceKey);
-                      
-                      // 解析速度值的辅助函数
-                      const parseSpeed = (speedStr: string): number => {
-                        if (!speedStr || speedStr === '未知' || speedStr === '测量中...') return 0;
-                        const match = speedStr.match(/^([\d.]+)\s*(KB\/s|MB\/s)$/);
-                        if (!match) return 0;
-                        const value = parseFloat(match[1]);
-                        const unit = match[2];
-                        return unit === 'MB/s' ? value * 1024 : value; // 统一转换为 KB/s
-                      };
-                      
-                      const aSpeed = aVideoInfo ? parseSpeed(aVideoInfo.loadSpeed) : 0;
-                      const bSpeed = bVideoInfo ? parseSpeed(bVideoInfo.loadSpeed) : 0;
-                      
-                      // 速度快的排在前面（降序）
-                      if (aSpeed !== bSpeed) {
-                        return bSpeed - aSpeed;
-                      }
-                      
-                      // 如果速度相同，按延迟排序（延迟低的排在前面）
-                      const aPing = aVideoInfo ? aVideoInfo.pingTime : 999999;
-                      const bPing = bVideoInfo ? bVideoInfo.pingTime : 999999;
-                      return aPing - bPing;
-                    }
-                    
                     return 0;
                   })
                   .map((source, index) => {
