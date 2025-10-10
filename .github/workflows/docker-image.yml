@@ -1,4 +1,4 @@
-name: Build & Push Docker image
+name: Build & Push My Docker image
 
 on:
   workflow_dispatch:
@@ -51,18 +51,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercase repository owner
-        id: lowercase
-        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-
-        with:
-          images: ghcr.io/moontechlab/lunatv
-          tags: |
-            type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
+      - name: Set lowercase repository info
+        id: repo
+        run: |
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "name=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Build and push by digest
         id: build
@@ -71,9 +64,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          tags: ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/moontechlab/lunatv,name-canonical=true,push=true
+          tags: ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.name }}:${{ github.event.inputs.tag || 'latest' }}
+          outputs: type=image,name=ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.name }},name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -111,15 +103,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercase repository owner
-        id: lowercase
-        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      - name: Set lowercase repository info
+        id: repo
+        run: |
+          echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "name=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create -t ghcr.io/moontechlab/lunatv:${{ github.event.inputs.tag || 'latest' }} \
-            $(printf 'ghcr.io/moontechlab/lunatv@sha256:%s ' *)
+          docker buildx imagetools create -t ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.name }}:${{ github.event.inputs.tag || 'latest' }} \
+            $(printf 'ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.name }}@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
